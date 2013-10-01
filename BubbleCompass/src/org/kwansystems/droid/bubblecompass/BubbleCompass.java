@@ -1,4 +1,4 @@
-package org.kwansystems.bubblecompass;
+package org.kwansystems.droid.bubblecompass;
 
 import android.app.Activity;
 import android.content.Context;

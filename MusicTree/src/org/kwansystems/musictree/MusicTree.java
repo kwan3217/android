@@ -4,6 +4,7 @@ import java.io.*;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.widget.*;
 import android.view.View;
 import android.view.View.*;
@@ -86,7 +87,7 @@ public class MusicTree extends Activity implements OnCompletionListener {
           }
         });
     try {
-      list = findSongs(new File("/sdcard-ext/Music"));
+      list = findSongs(new File(Environment.getExternalStorageDirectory().getPath()+"/Music"));
       index = 0;
       start();
     } catch (IOException e) {

@@ -33,7 +33,7 @@
         android:layout_alignBottom="@+id/pause"
         android:layout_toLeftOf="@+id/pause"
         android:text="|&lt;" />
-
+
     <Button
         android:id="@+id/foldrev"
         android:layout_width="60px"
@@ -51,7 +51,7 @@
         android:layout_alignBottom="@+id/pause"
         android:layout_toRightOf="@+id/pause"
         android:text=">|" />
-
+
     <Button
         android:id="@+id/foldfwd"
         android:layout_width="60px"

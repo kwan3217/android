@@ -1,5 +1,8 @@
 package org.kwansystems.droid.sensorlog;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,11 +23,13 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.GpsStatus.NmeaListener;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Process;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -148,8 +153,10 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
   public static class GPSLogFragment extends Fragment implements NmeaListener,LocationListener,OnCheckedChangeListener {
     TextView[] txtSystemClock,txtNMEA;
     SimpleDateFormat sdf=new SimpleDateFormat("hh:mm:ss.SSS");
+    SimpleDateFormat sdf2=new SimpleDateFormat("yyyymmdd'T'hhmmss");
     ArrayList<String> l=new ArrayList<String>();
     LocationManager locationManager;
+    PrintWriter ouf;
     /**
      * The fragment argument representing the section number for this
      * fragment.
@@ -225,6 +232,7 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
       locationManager = (LocationManager) this.getActivity().getSystemService(Context.LOCATION_SERVICE);
       locationManager.addNmeaListener((SensorLog)this.getActivity());
       locationManager.addNmeaListener(this);
+      
       return rootView;
     }
 
@@ -239,7 +247,9 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
       }
       if(i<txtNMEA.length) {
         txtNMEA[i].setText(NMEA);
-        txtSystemClock[i].setText(sdf.format(new Date(timestamp)));
+        String ts=sdf.format(new Date(timestamp));
+        txtSystemClock[i].setText(ts);
+        ouf.println(ts+NMEA);
       }
     }
 
@@ -247,8 +257,14 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
     public void onCheckedChanged(CompoundButton btnGPS, boolean isChecked) {
       if(isChecked) {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
+        try {
+          ouf=new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getPath()+"/SensorLogs/"+sdf2.format(new Date())+".txt"));
+    	} catch (IOException e) {
+    	  throw new RuntimeException(e);
+    	}
       } else {
         locationManager.removeUpdates(this);
+        ouf.close();
       }
     }
   }
@@ -289,19 +305,19 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
     final String[] unitName=new String[] {
         /* 0*/"",
         /* 1*/"m/s^2",
-        /* 2*/"µT",
-        /* 3*/"°",
+        /* 2*/"\u03bcT",
+        /* 3*/"\u00b0",
         /* 4*/"rad/s",
         /* 5*/"lux",
         /* 6*/"hPa",
-        /* 7*/"°C",
+        /* 7*/"\u00b0C",
         /* 8*/"cm",
         /* 9*/"m/s^2",
         /*10*/"m/s^2",
         /*11*/"",
         /*12*/"%",
-        /*13*/"°C",
-        /*14*/"µT",
+        /*13*/"\u00b0C",
+        /*14*/"\u03bcT",
         /*15*/"",
         /*16*/"rad/s",
         /*17*/"" //significant motion

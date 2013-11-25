@@ -1,8 +1,5 @@
 package org.kwansystems.droid.sensorlog;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,13 +7,18 @@ import java.util.List;
 import java.util.Locale;
 
 import org.kwansystems.droid.sensorlog.R;
+import org.kwansystems.droid.sensorlog.SensorLogService.LocalBinder;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -48,12 +50,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-public class SensorLog extends FragmentActivity implements ActionBar.TabListener,NmeaListener {
+public class SensorLog extends FragmentActivity implements ActionBar.TabListener {
   SectionsPagerAdapter mSectionsPagerAdapter;
   ViewPager mViewPager;
+  protected SensorLogService mService;
+  protected boolean mBound;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+	Intent intent=new Intent(this,SensorLogService.class);
+    startService(intent);
+    bindService(intent,mConnection,Context.BIND_AUTO_CREATE);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_sensor_log);
 
@@ -150,13 +157,11 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
     }
   }
 
-  public static class GPSLogFragment extends Fragment implements NmeaListener,LocationListener,OnCheckedChangeListener {
+  public class GPSLogFragment extends Fragment implements NmeaListener,LocationListener,OnCheckedChangeListener {
     TextView[] txtSystemClock,txtNMEA;
     SimpleDateFormat sdf=new SimpleDateFormat("hh:mm:ss.SSS");
-    SimpleDateFormat sdf2=new SimpleDateFormat("yyyymmdd'T'hhmmss");
     ArrayList<String> l=new ArrayList<String>();
     LocationManager locationManager;
-    PrintWriter ouf;
     /**
      * The fragment argument representing the section number for this
      * fragment.
@@ -230,7 +235,6 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
       // Acquire a reference to the system Location Manager
 
       locationManager = (LocationManager) this.getActivity().getSystemService(Context.LOCATION_SERVICE);
-      locationManager.addNmeaListener((SensorLog)this.getActivity());
       locationManager.addNmeaListener(this);
       
       return rootView;
@@ -249,7 +253,6 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
         txtNMEA[i].setText(NMEA);
         String ts=sdf.format(new Date(timestamp));
         txtSystemClock[i].setText(ts);
-        ouf.println(ts+NMEA);
       }
     }
 
@@ -257,24 +260,13 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
     public void onCheckedChanged(CompoundButton btnGPS, boolean isChecked) {
       if(isChecked) {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
-        try {
-          ouf=new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getPath()+"/SensorLogs/"+sdf2.format(new Date())+".txt"));
-    	} catch (IOException e) {
-    	  throw new RuntimeException(e);
-    	}
+        mService.openNMEA();
       } else {
         locationManager.removeUpdates(this);
-        ouf.close();
+        mService.closeNMEA();
       }
     }
   }
-
-  @Override
-  public void onNmeaReceived(long arg0, String arg1) {
-    // TODO Auto-generated method stub
-
-  }
-
 
   public static class SensorInfoFragment extends Fragment {
     private SensorManager mSensorManager;
@@ -333,8 +325,10 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
       txtSensorInfo=(TextView)rootView.findViewById(R.id.txtSensorInfo);
       List<Sensor> sensors=mSensorManager.getSensorList(Sensor.TYPE_ALL);
       String s="";
+      int i=0;
       for(Sensor I:sensors) {
-        s=s+I.toString()+"\n";
+        s=s+String.format("%d %s %s\n",i,typeName[I.getType()],I.toString());
+        i++;
       }
       txtSensorInfo.setText(s);
       return rootView;
@@ -342,86 +336,84 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
 
   }
 
-  public static class SensorLogFragment extends Fragment {
+  public class SensorLogFragment extends Fragment implements OnCheckedChangeListener,SensorEventListener {
     private SensorManager mSensorManager;
-    private TextView txtSensorInfo;
-
+    private TextView txtAccX,txtAccY,txtAccZ;
+    private TextView txtBfldX,txtBfldY,txtBfldZ;
+    private TextView txtGyroX,txtGyroY,txtGyroZ;
+    Sensor acc,bfld,gyro;
     public SensorLogFragment() {
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
       View rootView = inflater.inflate(R.layout.fragment_sensor_log, container, false);
+      ToggleButton btnSensors=(ToggleButton)rootView.findViewById(R.id.btnSensors);
+      txtAccX=(TextView)rootView.findViewById(R.id.txtAccX);
+      txtAccY=(TextView)rootView.findViewById(R.id.txtAccY);
+      txtAccZ=(TextView)rootView.findViewById(R.id.txtAccZ);
+      txtBfldX=(TextView)rootView.findViewById(R.id.txtBfldX);
+      txtBfldY=(TextView)rootView.findViewById(R.id.txtBfldY);
+      txtBfldZ=(TextView)rootView.findViewById(R.id.txtBfldZ);
+      txtGyroX=(TextView)rootView.findViewById(R.id.txtGyroX);
+      txtGyroY=(TextView)rootView.findViewById(R.id.txtGyroY);
+      txtGyroZ=(TextView)rootView.findViewById(R.id.txtGyroZ);
+      btnSensors.setOnCheckedChangeListener(this);
+      mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+      acc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+      bfld = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+      gyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
       return rootView;
     }
-
+    @Override
+    public void onCheckedChanged(CompoundButton btnGPS, boolean isChecked) {
+      if(isChecked) {
+      	mSensorManager.registerListener(this,acc, SensorManager.SENSOR_DELAY_NORMAL);
+    	mSensorManager.registerListener(this,bfld,SensorManager.SENSOR_DELAY_NORMAL);
+    	mSensorManager.registerListener(this,gyro,SensorManager.SENSOR_DELAY_NORMAL);
+        mService.openSensor();
+      } else {
+      	mSensorManager.unregisterListener(this);
+        mService.closeSensor();
+      }
+    }
+	@Override
+	public void onAccuracyChanged(Sensor arg0, int arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void onSensorChanged(SensorEvent arg0) {
+      if(arg0.sensor.getType()==Sensor.TYPE_ACCELEROMETER) {
+      	txtAccX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
+    	txtAccY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
+    	txtAccZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+      } else if(arg0.sensor.getType()==Sensor.TYPE_MAGNETIC_FIELD) {
+        txtBfldX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
+        txtBfldY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
+        txtBfldZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+      } else if(arg0.sensor.getType()==Sensor.TYPE_GYROSCOPE) {
+        txtGyroX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
+        txtGyroY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
+        txtGyroZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+      }
+	}
   }
 
-  public static class SensorLogService extends Service {
-    private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
+  /** Defines callbacks for service binding, passed to bindService() */
+  private ServiceConnection mConnection = new ServiceConnection() {
 
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            long endTime = System.currentTimeMillis() + 5*1000;
-            while (System.currentTimeMillis() < endTime) {
-                synchronized (this) {
-                    try {
-                        wait(endTime - System.currentTimeMillis());
-                    } catch (Exception e) {
-                    }
-                }
-            }
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
-        }
-    }
+      @Override
+      public void onServiceConnected(ComponentName className,
+              IBinder service) {
+          // We've bound to LocalService, cast the IBinder and get LocalService instance
+          LocalBinder binder = (LocalBinder) service;
+          mService = binder.getService();
+          mBound = true;
+      }
 
-    @Override
-    public void onCreate() {
-      // Start up the thread running the service.  Note that we create a
-      // separate thread because the service normally runs in the process's
-      // main thread, which we don't want to block.  We also make it
-      // background priority so CPU-intensive work will not disrupt our UI.
-      HandlerThread thread = new HandlerThread("ServiceStartArguments",
-              Process.THREAD_PRIORITY_BACKGROUND);
-      thread.start();
-      
-      // Get the HandlerThread's Looper and use it for our Handler 
-      mServiceLooper = thread.getLooper();
-      mServiceHandler = new ServiceHandler(mServiceLooper);
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
-        Message msg = mServiceHandler.obtainMessage();
-        msg.arg1 = startId;
-        mServiceHandler.sendMessage(msg);
-        
-        // If we get killed, after returning from here, restart
-        return START_STICKY;
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        // We don't provide binding, so return null
-        return null;
-    }
-    
-    @Override
-    public void onDestroy() {
-      Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show(); 
-    }
-  }
+      @Override
+      public void onServiceDisconnected(ComponentName arg0) {
+          mBound = false;
+      }
+  };
 }

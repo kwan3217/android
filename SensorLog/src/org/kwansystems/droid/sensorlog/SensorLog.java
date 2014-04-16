@@ -11,7 +11,6 @@ import org.kwansystems.droid.sensorlog.SensorLogService.LocalBinder;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -25,35 +24,25 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.GpsStatus.NmeaListener;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.os.Process;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 public class SensorLog extends FragmentActivity implements ActionBar.TabListener {
   SectionsPagerAdapter mSectionsPagerAdapter;
   ViewPager mViewPager;
-  protected SensorLogService mService;
+  static protected SensorLogService mService;
   protected boolean mBound;
 
   @Override
@@ -157,7 +146,7 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
     }
   }
 
-  public class GPSLogFragment extends Fragment implements NmeaListener,LocationListener,OnCheckedChangeListener {
+  public static class GPSLogFragment extends Fragment implements NmeaListener,LocationListener,OnCheckedChangeListener {
     TextView[] txtSystemClock,txtNMEA;
     SimpleDateFormat sdf=new SimpleDateFormat("hh:mm:ss.SSS");
     ArrayList<String> l=new ArrayList<String>();
@@ -327,7 +316,7 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
       String s="";
       int i=0;
       for(Sensor I:sensors) {
-        s=s+String.format("%d %s %s\n",i,typeName[I.getType()],I.toString());
+        s=s+String.format("%d %s\n",i,I.toString());
         i++;
       }
       txtSensorInfo.setText(s);
@@ -336,7 +325,7 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
 
   }
 
-  public class SensorLogFragment extends Fragment implements OnCheckedChangeListener,SensorEventListener {
+  public static class SensorLogFragment extends Fragment implements OnCheckedChangeListener,SensorEventListener {
     private SensorManager mSensorManager;
     private TextView txtAccX,txtAccY,txtAccZ;
     private TextView txtBfldX,txtBfldY,txtBfldZ;
@@ -358,7 +347,7 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
       txtGyroY=(TextView)rootView.findViewById(R.id.txtGyroY);
       txtGyroZ=(TextView)rootView.findViewById(R.id.txtGyroZ);
       btnSensors.setOnCheckedChangeListener(this);
-      mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+      mSensorManager = (SensorManager) (getActivity()).getSystemService(Context.SENSOR_SERVICE);
       acc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
       bfld = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
       gyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
@@ -368,25 +357,25 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
     public void onCheckedChanged(CompoundButton btnGPS, boolean isChecked) {
       if(isChecked) {
       	mSensorManager.registerListener(this,acc, SensorManager.SENSOR_DELAY_NORMAL);
-    	mSensorManager.registerListener(this,bfld,SensorManager.SENSOR_DELAY_NORMAL);
-    	mSensorManager.registerListener(this,gyro,SensorManager.SENSOR_DELAY_NORMAL);
+      	mSensorManager.registerListener(this,bfld,SensorManager.SENSOR_DELAY_NORMAL);
+      	mSensorManager.registerListener(this,gyro,SensorManager.SENSOR_DELAY_NORMAL);
         mService.openSensor();
       } else {
       	mSensorManager.unregisterListener(this);
         mService.closeSensor();
       }
     }
-	@Override
-	public void onAccuracyChanged(Sensor arg0, int arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-	@Override
-	public void onSensorChanged(SensorEvent arg0) {
+  	@Override
+	  public void onAccuracyChanged(Sensor arg0, int arg1) {
+  		// TODO Auto-generated method stub
+	  	
+  	}
+	  @Override
+	  public void onSensorChanged(SensorEvent arg0) {
       if(arg0.sensor.getType()==Sensor.TYPE_ACCELEROMETER) {
       	txtAccX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
-    	txtAccY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
-    	txtAccZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+    	  txtAccY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
+      	txtAccZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
       } else if(arg0.sensor.getType()==Sensor.TYPE_MAGNETIC_FIELD) {
         txtBfldX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
         txtBfldY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
@@ -396,7 +385,7 @@ public class SensorLog extends FragmentActivity implements ActionBar.TabListener
         txtGyroY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
         txtGyroZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
       }
-	}
+  	}
   }
 
   /** Defines callbacks for service binding, passed to bindService() */

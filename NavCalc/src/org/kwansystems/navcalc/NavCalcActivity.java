@@ -3,9 +3,12 @@ package org.kwansystems.navcalc;
 import java.util.*;
 
 import android.app.*;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.widget.*;
+import android.text.InputType;
 import android.view.View;
 
 public class NavCalcActivity extends Activity {
@@ -104,9 +107,14 @@ public class NavCalcActivity extends Activity {
       });
       ((Button) findViewById(R.id.Victory)).setOnClickListener(new View.OnClickListener() {
         public void onClick(View v) {
-          recalc();
-          MediaPlayer mediaPlayer = MediaPlayer.create(getBaseContext(), R.raw.victory);
-          mediaPlayer.start(); // no need to call prepare(); create() does that for you
+          EditText TaxiTime=(EditText) findViewById(R.id.TaxiTime);
+          if(TaxiTime.getText().toString().equals("3217")) {
+            startActivity(new Intent(getApplicationContext(), TwofishActivity.class));                   
+          } else {
+            recalc();
+            MediaPlayer mediaPlayer = MediaPlayer.create(getBaseContext(), R.raw.victory);
+            mediaPlayer.start(); // no need to call prepare(); create() does that for you
+          }
         }
       });
     }

@@ -90,11 +90,15 @@ public class TwofishActivity extends Activity {
     if(settings.contains("ciphertext")) {
       final String ciphertext = settings.getString("ciphertext", null);
       final AlertDialog.Builder alert = new AlertDialog.Builder(this);
-      final EditText input = new EditText(this);
-
-      input.setInputType(InputType.TYPE_CLASS_TEXT| InputType.TYPE_TEXT_VARIATION_PASSWORD);
-
-      alert.setView(input);    //edit text added to alert
+      final EditText input1 = new EditText(this);
+      final EditText input2 = new EditText(this);
+      final LinearLayout view=new LinearLayout(getApplicationContext());
+      view.setOrientation(1);
+      input1.setInputType(InputType.TYPE_CLASS_TEXT| InputType.TYPE_TEXT_VARIATION_PASSWORD);
+//      input2.setInputType(InputType.TYPE_CLASS_NUMBER);
+      view.addView(input1);
+//      view.addView(input2);
+      alert.setView(view);    //edit text added to alert
       alert.setTitle("Please enter passphrase");   //title setted
       alert.setCancelable(true);
       alert.setPositiveButton("OK",new DialogInterface.OnClickListener() {
@@ -102,7 +106,8 @@ public class TwofishActivity extends Activity {
         // if this button is clicked, close
         // current activity
         EditText TwofishNotes=(EditText) findViewById(R.id.txtTwofishNotes);
-        String passphrase=input.getText().toString();
+        String passphrase=input1.getText().toString();
+//        String mode=input2.getText().toString();
         String plaintext;
         try {
           plaintext = KwanCryptWrapper.decrypt(passphrase, ciphertext);

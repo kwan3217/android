@@ -153,7 +153,7 @@ public class NavCalcActivity extends Activity {
       modblock=m1+tt;
       hblock=modblock/60;
       mblock=modblock%60;
-      if(hblock>=24) hblock-=24;
+      hblock%=24;
       BlockTime.setText(pad(hblock)+pad(mblock)+"Z");
     }
 

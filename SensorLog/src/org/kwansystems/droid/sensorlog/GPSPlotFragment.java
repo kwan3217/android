@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 public class GPSPlotFragment extends Fragment implements NmeaListener {
   private GPSPlotView gpsPlotView;
-  private TextView txtLatitude,txtLongitude;
+  private TextView txtLatitude,txtLongitude,txtAltitude;
   public GPSPlotFragment() {
   }
   @Override
@@ -25,6 +25,7 @@ public class GPSPlotFragment extends Fragment implements NmeaListener {
     gpsPlotView=(GPSPlotView)rootView.findViewById(R.id.gpsPlotView);
     txtLatitude =(TextView)rootView.findViewById(R.id.txtLatitude );
     txtLongitude=(TextView)rootView.findViewById(R.id.txtLongitude);
+    txtAltitude=(TextView)rootView.findViewById(R.id.txtAltitude);
     if(gpsPlotView==null) {
       Log.d("GPSPlotFragment","gpsPlotView: null");
     } else {
@@ -38,8 +39,10 @@ public class GPSPlotFragment extends Fragment implements NmeaListener {
     if(gpsPlotView!=null) gpsPlotView.onNmeaReceived(timestamp, nmea); 
     String[] p=nmea.split(",");
     if(p[0].equals("$GPRMC")) {
-      txtLatitude .setText(p[3]+","+p[4]);      
-      txtLongitude.setText(p[5]+","+p[6]);      
+      if(txtLatitude !=null)txtLatitude .setText(p[3]+","+p[4]);      
+      if(txtLongitude!=null)txtLongitude.setText(p[5]+","+p[6]);      
+    } else if(p[0].equals("$GPGGA")) {
+      if(txtAltitude!=null)txtAltitude.setText(p[9]);
     }
   }
 

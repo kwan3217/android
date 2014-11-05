@@ -1,7 +1,0 @@
-bin
-gen
-*.jar
-local.properties
-proguard-project.txt
-.settings
-

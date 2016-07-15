@@ -17,10 +17,11 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class SensorLogFragment extends Fragment implements OnCheckedChangeListener,SensorEventListener {
   private SensorManager mSensorManager;
-  private TextView txtAccX,txtAccY,txtAccZ;
-  private TextView txtBfldX,txtBfldY,txtBfldZ;
-  private TextView txtGyroX,txtGyroY,txtGyroZ;
-  Sensor acc,bfld,gyro;
+  private TextView txtAcc[]=new TextView[3];
+  private TextView txtBfld[]=new TextView[3];
+  private TextView txtGyro[]=new TextView[3];
+  private TextView txtPres[]=new TextView[1];
+  Sensor acc,bfld,gyro,pres;
   BubbleCompassFragment sibling;
   public SensorLogFragment(BubbleCompassFragment Lsibling) {
     sibling=Lsibling;
@@ -29,20 +30,22 @@ public class SensorLogFragment extends Fragment implements OnCheckedChangeListen
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     View rootView = inflater.inflate(R.layout.fragment_sensor_log, container, false);
     ToggleButton btnSensors=(ToggleButton)rootView.findViewById(R.id.btnSensors);
-    txtAccX=(TextView)rootView.findViewById(R.id.txtAccX);
-    txtAccY=(TextView)rootView.findViewById(R.id.txtAccY);
-    txtAccZ=(TextView)rootView.findViewById(R.id.txtAccZ);
-    txtBfldX=(TextView)rootView.findViewById(R.id.txtBfldX);
-    txtBfldY=(TextView)rootView.findViewById(R.id.txtBfldY);
-    txtBfldZ=(TextView)rootView.findViewById(R.id.txtBfldZ);
-    txtGyroX=(TextView)rootView.findViewById(R.id.txtGyroX);
-    txtGyroY=(TextView)rootView.findViewById(R.id.txtGyroY);
-    txtGyroZ=(TextView)rootView.findViewById(R.id.txtGyroZ);
+    txtAcc[0]=(TextView)rootView.findViewById(R.id.txtAccX);
+    txtAcc[1]=(TextView)rootView.findViewById(R.id.txtAccY);
+    txtAcc[2]=(TextView)rootView.findViewById(R.id.txtAccZ);
+    txtBfld[0]=(TextView)rootView.findViewById(R.id.txtBfldX);
+    txtBfld[1]=(TextView)rootView.findViewById(R.id.txtBfldY);
+    txtBfld[2]=(TextView)rootView.findViewById(R.id.txtBfldZ);
+    txtGyro[0]=(TextView)rootView.findViewById(R.id.txtGyroX);
+    txtGyro[1]=(TextView)rootView.findViewById(R.id.txtGyroY);
+    txtGyro[2]=(TextView)rootView.findViewById(R.id.txtGyroZ);
+    txtPres[0]=(TextView)rootView.findViewById(R.id.txtPresX);
     btnSensors.setOnCheckedChangeListener(this);
     mSensorManager = (SensorManager) (getActivity()).getSystemService(Context.SENSOR_SERVICE);
     acc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     bfld = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
     gyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+    pres = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
     return rootView;
   }
   @Override
@@ -50,7 +53,8 @@ public class SensorLogFragment extends Fragment implements OnCheckedChangeListen
     if(isChecked) {
     	mSensorManager.registerListener(this,acc, SensorManager.SENSOR_DELAY_NORMAL);
     	mSensorManager.registerListener(this,bfld,SensorManager.SENSOR_DELAY_NORMAL);
-    	mSensorManager.registerListener(this,gyro,SensorManager.SENSOR_DELAY_NORMAL);
+      mSensorManager.registerListener(this,gyro,SensorManager.SENSOR_DELAY_NORMAL);
+      mSensorManager.registerListener(this,pres,SensorManager.SENSOR_DELAY_NORMAL);
       mSensorManager.registerListener(sibling.mGraphView,acc, SensorManager.SENSOR_DELAY_NORMAL);
       mSensorManager.registerListener(sibling.mGraphView,bfld,SensorManager.SENSOR_DELAY_NORMAL);
       SensorLog.mService.openSensor();
@@ -67,18 +71,17 @@ public class SensorLogFragment extends Fragment implements OnCheckedChangeListen
 	}
   @Override
   public void onSensorChanged(SensorEvent arg0) {
+    TextView[] txtSens=null;
+    int l;
     if(arg0.sensor.getType()==Sensor.TYPE_ACCELEROMETER) {
-    	txtAccX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
-  	  txtAccY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
-    	txtAccZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+      txtSens=txtAcc;
     } else if(arg0.sensor.getType()==Sensor.TYPE_MAGNETIC_FIELD) {
-      txtBfldX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
-      txtBfldY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
-      txtBfldZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+      txtSens=txtBfld;
     } else if(arg0.sensor.getType()==Sensor.TYPE_GYROSCOPE) {
-      txtGyroX.setText(String.format("%f",arg0.values[0]/arg0.sensor.getResolution()));
-      txtGyroY.setText(String.format("%f",arg0.values[1]/arg0.sensor.getResolution()));
-      txtGyroZ.setText(String.format("%f",arg0.values[2]/arg0.sensor.getResolution()));
+      txtSens=txtGyro;
+    } else if(arg0.sensor.getType()==Sensor.TYPE_PRESSURE) {
+      txtSens=txtPres;
     }
+    lipseength;i++) txtSens[i].setText(String.format("%d",((int)(arg0.values[i]/arg0.sensor.getResolution()+0.5))));
 	}
 }

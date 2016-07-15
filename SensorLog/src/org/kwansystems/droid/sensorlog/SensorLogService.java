@@ -44,6 +44,7 @@ public class SensorLogService extends Service implements NmeaListener,
     acc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     bfld = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
     gyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+    pres = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 
     Toast.makeText(this, "Sensor service starting", Toast.LENGTH_SHORT).show();
 
@@ -95,7 +96,7 @@ public class SensorLogService extends Service implements NmeaListener,
   }
 
   private SensorManager mSensorManager;
-  private Sensor acc, bfld, gyro;
+  private Sensor acc, bfld, gyro, pres;
 
   public void openSensor() {
     if(oufSensor==null) try {
@@ -103,6 +104,7 @@ public class SensorLogService extends Service implements NmeaListener,
       mSensorManager.registerListener(this, acc,  SensorManager.SENSOR_DELAY_FASTEST);
       mSensorManager.registerListener(this, bfld, SensorManager.SENSOR_DELAY_FASTEST);
       mSensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
+      mSensorManager.registerListener(this, pres, SensorManager.SENSOR_DELAY_FASTEST);
       oufSensor = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getPath()+ "/SensorLogs/Sensor"+sdf2.format(new Date()) + ".csv"));
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -150,7 +152,9 @@ public class SensorLogService extends Service implements NmeaListener,
   @Override
   public void onSensorChanged(SensorEvent arg0) {
     if(oufSensor!=null) {
-      oufSensor.printf("%d,%s,%d,%f,%f,%f\n", arg0.timestamp, sdf.format(new Date()), arg0.sensor.getType(), arg0.values[0], arg0.values[1], arg0.values[2]);
+      oufSensor.printf("%d,%s,%d",arg0.timestamp, sdf.format(new Date()), arg0.sensor.getType());
+      for(double v:arg0.values) oufSensor.printf(",%f", v);
+      oufSensor.println();
     }
   }
 }

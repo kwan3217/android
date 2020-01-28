@@ -1,12 +1,5 @@
 package org.kwansystems.navcalc;
 
-import java.security.InvalidKeyException;
-
-import org.kwansystems.encrypt.KwanCryptWrapper;
-import org.kwansystems.encrypt.Twofish_Algorithm;
-
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,10 +8,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.Toast;
 
-public class TwofishActivity extends Activity {
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import org.kwansystems.encrypt.KwanCryptWrapper;
+
+import java.security.InvalidKeyException;
+
+public class TwofishActivity extends AppCompatActivity {
     @Override
     public void onTrimMemory(int level) {
         // TODO Auto-generated method stub

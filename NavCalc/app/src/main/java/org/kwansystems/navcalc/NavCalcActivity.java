@@ -1,17 +1,22 @@
 package org.kwansystems.navcalc;
 
-import java.util.*;
-
-import android.app.*;
-import android.content.DialogInterface;
+import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.widget.*;
-import android.text.InputType;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TimePicker;
 
-public class NavCalcActivity extends Activity {
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.Calendar;
+import java.util.TimeZone;
+
+public class NavCalcActivity extends AppCompatActivity {
     private static String pad(int c) {
         if (c >= 10) {
             return String.valueOf(c);

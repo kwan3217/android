@@ -1,7 +1,10 @@
 package org.kwansystems.gomjabbar;
 
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -15,10 +18,16 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
     // you provide access to all the views for a data item in a view holder
     public static class FoodViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-        public TextView textView;
+        public Button btnDelete;
+        public TextView txtQuantity;
+        public TextView txtItem;
+        public TextView txtCalories;
         public FoodViewHolder(ConstraintLayout v) {
             super(v);
-            textView = (TextView)v.getChildAt(2);
+            btnDelete   = (Button  )v.getChildAt(0);
+            txtQuantity = (TextView)v.getChildAt(1);
+            txtItem     = (TextView)v.getChildAt(2);
+            txtCalories = (TextView)v.getChildAt(3);
         }
     }
 
@@ -40,10 +49,17 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
 
     // Replace the contents of a view (invoked by the layout manager)
     @Override
-    public void onBindViewHolder(FoodViewHolder holder, int position) {
+    public void onBindViewHolder(FoodViewHolder holder, int Lposition) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        holder.textView.setText(mDataset[position]);
+        final int position=Lposition;
+        holder.txtItem.setText(mDataset[position]);
+        holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("btnDelete","onclick"+position);
+            }
+        });
 
     }
 
